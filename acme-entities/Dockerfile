@@ -22,27 +22,27 @@ ARG \
 RUN \
     set -x \
     && apk add --no-cache \
-        ca-certificates \
-        openssl \
-        libffi \
+    ca-certificates \
+    openssl \
+    libffi \
     && apk add --no-cache --virtual .build-deps \
-        build-base \
-        cargo \
-        golang \
-        libffi-dev \
-        openssl-dev \
-        python3-dev \
-        rust \
+    build-base \
+    cargo \
+    go \
+    libffi-dev \
+    openssl-dev \
+    python3-dev \
+    rust \
     && pip3 install --no-cache-dir \
-        acme==${ACME_VERSION} \
-        certbot==${CERTBOT_VERSION} \
-        certbot-dns-azure==${CERTBOT_DNS_AZURE_VERSION} \
-        certbot-dns-eurodns==${CERTBOT_DNS_EURODNS_VERSION} \
-        certbot-dns-gehirn==${CERTBOT_VERSION} \
-        certbot-dns-hurricane-electric==${CERTBOT_DNS_HURRICANE_ELECTRIC_VERSION} \
-        certbot-dns-multi==${CERTBOT_DNS_MULTI_VERSION} \
-        certbot-dns-norisnetwork==${CERTBOT_DNS_NORISNETWORK_VERSION} \
-        cryptography==${CRYPTOGRAPHY_VERSION} \
+    acme==${ACME_VERSION} \
+    certbot==${CERTBOT_VERSION} \
+    certbot-dns-azure==${CERTBOT_DNS_AZURE_VERSION} \
+    certbot-dns-eurodns==${CERTBOT_DNS_EURODNS_VERSION} \
+    certbot-dns-gehirn==${CERTBOT_VERSION} \
+    certbot-dns-hurricane-electric==${CERTBOT_DNS_HURRICANE_ELECTRIC_VERSION} \
+    certbot-dns-multi==${CERTBOT_DNS_MULTI_VERSION} \
+    certbot-dns-norisnetwork==${CERTBOT_DNS_NORISNETWORK_VERSION} \
+    cryptography==${CRYPTOGRAPHY_VERSION} \
     && apk del .build-deps \
     && rm -rf /root/.cache
 
