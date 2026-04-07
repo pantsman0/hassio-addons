@@ -461,8 +461,15 @@ async def ws_listener(manager, session):
     while True:
         try:
             async with session.ws_connect(WS_URL) as ws:
-                # Auth
+                # Authenticate first, we need to wait for the auth_required message.
+                msg = await ws.receive_json()
+                if msg.get("type") != "auth_required":
+                    logger.error("Expected auth_required from WebSocket, got: %s", msg)
+                    await asyncio.sleep(60)
+                    continue
                 await ws.send_json({"type": "auth", "access_token": SUPERVISOR_TOKEN})
+
+                # Check for auth failure
                 auth_resp = await ws.receive_json()
                 if auth_resp.get("type") != "auth_ok":
                     logger.error("WebSocket Auth failed: %s", auth_resp)
