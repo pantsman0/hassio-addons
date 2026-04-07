@@ -1,22 +1,17 @@
 ---
 configuration:
-  domains:
-    name: Domains
-    description: >-
-      The domain names to issue certificates for, use "*.yourdomain.com" for
-      wildcard certificates.
   email:
     name: Email
     description: The email address that will be registered for the certificate.
-  keyfile:
-    name: Private Key File
-    description: Path to where the Private Key File will be placed.
-  certfile:
-    name: Certificate File
-    description: Path to where the Certificate File will be placed.
-  challenge:
-    name: Challenge
-    description: The type of challenge used to validate the domain.
+  accept_terms:
+    name: Accept Terms
+    description: Accept the ACME server Terms of Service.
+  authenticators:
+    name: Authenticators
+    description: List of DNS authenticators and their credentials.
+  certificates:
+    name: Certificates
+    description: List of certificates to manage.
   acme_server:
     name: Custom ACME Server
     description: >-
@@ -28,19 +23,6 @@ configuration:
       Only relevant with a custom ACME server using a certificate signed by an
       untrusted certificate authority (CA) that requires addition to the trust
       store.
-  dns:
-    name: DNS
-    description: DNS Provider configuration
-  key_type:
-    name: Key Type
-    description: >-
-      Select the certificate key type. If unset, will auto-detect based on
-      the key type of the existing certificate or default to ecdsa.
-  elliptic_curve:
-    name: Elliptic Curve
-    description: >-
-      Elliptic curve for ECDSA keys. This option must be used with Key Type
-      set to ECDSA. If unset the Certbot default will be used.
   dry_run:
     name: Dry Run
     description: >-
@@ -59,5 +41,10 @@ configuration:
     name: Force Renew
     description: >-
       Force certificate renewal even if it is not close to expiry.
-network:
-  80/tcp: Only needed for http challenge
+  eab_kid:
+    name: EAB KID
+    description: External Account Binding Key ID.
+  eab_hmac_key:
+    name: EAB HMAC Key
+    description: External Account Binding HMAC Key.
+network: {}

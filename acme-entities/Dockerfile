@@ -43,6 +43,7 @@ RUN \
     certbot-dns-multi==${CERTBOT_DNS_MULTI_VERSION} \
     certbot-dns-norisnetwork==${CERTBOT_DNS_NORISNETWORK_VERSION} \
     cryptography==${CRYPTOGRAPHY_VERSION} \
+    aiohttp \
     && apk del .build-deps \
     && rm -rf /root/.cache
 

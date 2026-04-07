@@ -1,5 +1,5 @@
 ---
-version: 0.1.0
+version: 0.2.0
 breaking_versions: []
 slug: acme-entities
 name: Acme Entities
@@ -9,6 +9,7 @@ arch:
   - aarch64
   - amd64
 boot: manual
+homeassistant_api: true
 init: false
 map:
   - ssl:rw
@@ -18,15 +19,57 @@ options:
   accept_terms: false
   authenticators: []
   certificates: []
-ports:
-  80/tcp: 80
 schema:
   email: email
   accept_terms: bool
   authenticators:
     - name: str
-      challenge: list(dns|http)
       dns:
+        provider: "list(\
+            dns-azure|\
+            dns-bunny|\
+            dns-cloudflare|\
+            dns-cloudns|\
+            dns-desec|\
+            dns-digitalocean|\
+            dns-directadmin|\
+            dns-dnsimple|\
+            dns-dnsmadeeasy|\
+            dns-domainoffensive|\
+            dns-dreamhost|\
+            dns-duckdns|\
+            dns-dynu|\
+            dns-easydns|\
+            dns-eurodns|\
+            dns-gandi|\
+            dns-gehirn|\
+            dns-godaddy|\
+            dns-google|\
+            dns-he|\
+            dns-hetzner|\
+            dns-infomaniak|\
+            dns-inwx|\
+            dns-ionos|\
+            dns-joker|\
+            dns-lego|\
+            dns-linode|\
+            dns-loopia|\
+            dns-luadns|\
+            dns-mijn-host|\
+            dns-namecheap|\
+            dns-netcup|\
+            dns-njalla|\
+            dns-noris|\
+            dns-nsone|\
+            dns-ovh|\
+            dns-plesk|\
+            dns-porkbun|\
+            dns-rfc2136|\
+            dns-route53|\
+            dns-sakuracloud|\
+            dns-simply|\
+            dns-transip|\
+            dns-websupport)?"
         aws_access_key_id: str?
         aws_region: str?
         aws_secret_access_key: str?
@@ -107,51 +150,6 @@ schema:
         porkbun_key: str?
         porkbun_secret: str?
         propagation_seconds: int(60,3600)?
-        provider: "list(\
-            dns-azure|\
-            dns-bunny|\
-            dns-cloudflare|\
-            dns-cloudns|\
-            dns-desec|\
-            dns-digitalocean|\
-            dns-directadmin|\
-            dns-dnsimple|\
-            dns-dnsmadeeasy|\
-            dns-domainoffensive|\
-            dns-dreamhost|\
-            dns-duckdns|\
-            dns-dynu|\
-            dns-easydns|\
-            dns-eurodns|\
-            dns-gandi|\
-            dns-gehirn|\
-            dns-godaddy|\
-            dns-google|\
-            dns-he|\
-            dns-hetzner|\
-            dns-infomaniak|\
-            dns-inwx|\
-            dns-ionos|\
-            dns-joker|\
-            dns-lego|\
-            dns-linode|\
-            dns-loopia|\
-            dns-luadns|\
-            dns-mijn-host|\
-            dns-namecheap|\
-            dns-netcup|\
-            dns-njalla|\
-            dns-noris|\
-            dns-nsone|\
-            dns-ovh|\
-            dns-plesk|\
-            dns-porkbun|\
-            dns-rfc2136|\
-            dns-route53|\
-            dns-sakuracloud|\
-            dns-simply|\
-            dns-transip|\
-            dns-websupport)?"
         rfc2136_algorithm: str?
         rfc2136_name: str?
         rfc2136_port: str?
