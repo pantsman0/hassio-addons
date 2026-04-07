@@ -185,174 +185,168 @@ class AcmeManager:
         challenge = auth.get("challenge")
         dns_config = auth.get("dns", {})
 
+        provider = auth.get("provider")
+
         acme_args = []
         key_args = []
         add_args = []
 
-        if challenge == "dns":
-            provider = dns_config.get("provider")
-            propagation_seconds = int(dns_config.get("propagation_seconds", 60))
+        propagation_seconds = int(dns_config.get("propagation_seconds", 60))
 
-            if provider in LEGACY_PROVIDERS or provider in DEPRECATED_PROVIDERS:
-                match provider:
-                    case "dns-eurodns":
-                        app_id = dns_config.get("eurodns_applicationId")
-                        api_key = dns_config.get("eurodns_apiKey")
-                        with open(DNS_API_KEY, "w") as f:
-                            f.write(
-                                f"dns_eurodns_apiKey = {api_key}\ndns_eurodns_applicationId = {app_id}\n"
-                            )
-                        acme_args.extend(
-                            [
-                                "--authenticator",
-                                provider,
-                                f"--{provider}-credentials",
-                                DNS_API_KEY,
-                                f"--{provider}-propagation-seconds",
-                                str(propagation_seconds),
-                            ]
+        if provider in LEGACY_PROVIDERS or provider in DEPRECATED_PROVIDERS:
+            match provider:
+                case "dns-eurodns":
+                    app_id = dns_config.get("eurodns_applicationId")
+                    api_key = dns_config.get("eurodns_apiKey")
+                    with open(DNS_API_KEY, "w") as f:
+                        f.write(
+                            f"dns_eurodns_apiKey = {api_key}\ndns_eurodns_applicationId = {app_id}\n"
                         )
-                    case "dns-gehirn":
-                        tok = dns_config.get("gehirn_api_token")
-                        sec = dns_config.get("gehirn_api_secret")
-                        with open(DNS_API_KEY, "w") as f:
-                            f.write(
-                                f"dns_gehirn_api_secret = {sec}\ndns_gehirn_api_token = {tok}\n"
-                            )
-                        acme_args.extend(
-                            [f"--{provider}", f"--{provider}-credentials", DNS_API_KEY]
-                        )
-                    case "dns-noris":
-                        tok = dns_config.get("noris_token")
-                        with open(DNS_API_KEY, "w") as f:
-                            f.write(f"dns_noris_token = {tok}\n")
-                        acme_args.extend(
-                            [
-                                "--authenticator",
-                                provider,
-                                f"--{provider}-credentials",
-                                DNS_API_KEY,
-                                f"--{provider}-propagation-seconds",
-                                str(propagation_seconds),
-                            ]
-                        )
-                    case "dns-azure":
-                        azure_creds = dns_config.get("azure_config")
-                        shutil.copy(f"/share/{azure_creds}", "/data/azure_creds")
-                        os.chmod("/data/azure_creds", 0o600)
-                        acme_args.extend(
-                            [
-                                "--authenticator",
-                                "dns-azure",
-                                "--dns-azure-config",
-                                "/data/azure_creds",
-                                "--dns-azure-propagation-seconds",
-                                str(propagation_seconds),
-                            ]
-                        )
-                    case "dns-he":
-                        usr = dns_config.get("he_user")
-                        pwd = dns_config.get("he_pass")
-                        with open(DNS_API_KEY, "w") as f:
-                            f.write(
-                                f"dns_hurricane_electric_pass = {pwd}\n\ndns_hurricane_electric_user = {usr}\n"
-                            )
-                        acme_args.extend(
-                            [
-                                "--authenticator",
-                                "dns-hurricane_electric",
-                                "--dns-hurricane_electric-credentials",
-                                "/data/dnsapikey",
-                                "--dns-hurricane_electric-propagation-seconds",
-                                str(propagation_seconds),
-                            ]
-                        )
-            else:
-                lego_provider = LEGO_PROVIDERS.get(provider)
-                if not lego_provider and provider == "dns-lego":
-                    lego_provider = dns_config.get("lego_provider")
-
-                multi_creds = [f"dns_multi_provider = {lego_provider}"]
-                provider_env_prefix = ""
-
-                match provider:
-                    case "dns-lego":
-                        multi_creds.extend(dns_config.get("lego_env", []))
-                    case "dns-bunny":
-                        multi_creds.append(
-                            f"BUNNY_API_KEY={dns_config.get('bunny_api_key')}"
-                        )
-                    case "dns-cloudflare":
-                        if dns_config.get("cloudflare_api_token"):
-                            multi_creds.append(
-                                f"CLOUDFLARE_DNS_API_TOKEN={dns_config['cloudflare_api_token']}"
-                            )
-                        else:
-                            multi_creds.append(
-                                f"CF_API_EMAIL={dns_config.get('cloudflare_email', '')}"
-                            )
-                            multi_creds.append(
-                                f"CF_API_KEY={dns_config.get('cloudflare_api_key', '')}"
-                            )
-                    case "dns-cloudns":
-                        multi_creds.append(
-                            f"CLOUDNS_AUTH_PASSWORD={dns_config.get('cloudns_auth_password')}"
-                        )
-                        if dns_config.get("cloudns_auth_id"):
-                            multi_creds.append(
-                                f"CLOUDNS_AUTH_ID={dns_config['cloudns_auth_id']}"
-                            )
-                    case "dns-desec":
-                        multi_creds.append(
-                            f"DESEC_TOKEN={dns_config.get('desec_token')}"
-                        )
-                    case "dns-digitalocean":
-                        multi_creds.append(
-                            f"DO_AUTH_TOKEN={dns_config.get('digitalocean_token')}"
-                        )
-                        provider_env_prefix = "DO"
-                    case "dns-route53":
-                        multi_creds.append(
-                            f"AWS_ACCESS_KEY_ID={dns_config.get('aws_access_key_id')}"
-                        )
-                        multi_creds.append(
-                            f"AWS_SECRET_ACCESS_KEY={dns_config.get('aws_secret_access_key')}"
-                        )
-                        multi_creds.append(
-                            f"AWS_REGION={dns_config.get('aws_region', 'us-east-1')}"
-                        )
-                        provider_env_prefix = "AWS"
-                    # Add remaining cases as needed, abbreviated here for brevity
-                    case _:
-                        # Most simple token-based providers follow a pattern
-                        pass
-
-                if not provider_env_prefix:
-                    provider_env_prefix = (
-                        (lego_provider or "").replace("-", "_").upper()
-                    )
-                multi_creds.append(
-                    f"{provider_env_prefix}_PROPAGATION_TIMEOUT={propagation_seconds}"
-                )
-
-                with open(DNS_MULTI_CREDS, "w") as f:
-                    f.write("\n".join(multi_creds) + "\n")
-                acme_args.extend(
-                    [
-                        "--authenticator",
-                        "dns-multi",
-                        "--dns-multi-credentials",
-                        DNS_MULTI_CREDS,
-                        "--dns-multi-propagation-seconds",
-                        str(propagation_seconds),
-                    ]
-                )
-                if dns_config.get("dns_multi_nameservers"):
                     acme_args.extend(
-                        ["--dns-multi-nameservers", dns_config["dns_multi_nameservers"]]
+                        [
+                            "--authenticator",
+                            provider,
+                            f"--{provider}-credentials",
+                            DNS_API_KEY,
+                            f"--{provider}-propagation-seconds",
+                            str(propagation_seconds),
+                        ]
+                    )
+                case "dns-gehirn":
+                    tok = dns_config.get("gehirn_api_token")
+                    sec = dns_config.get("gehirn_api_secret")
+                    with open(DNS_API_KEY, "w") as f:
+                        f.write(
+                            f"dns_gehirn_api_secret = {sec}\ndns_gehirn_api_token = {tok}\n"
+                        )
+                    acme_args.extend(
+                        [f"--{provider}", f"--{provider}-credentials", DNS_API_KEY]
+                    )
+                case "dns-noris":
+                    tok = dns_config.get("noris_token")
+                    with open(DNS_API_KEY, "w") as f:
+                        f.write(f"dns_noris_token = {tok}\n")
+                    acme_args.extend(
+                        [
+                            "--authenticator",
+                            provider,
+                            f"--{provider}-credentials",
+                            DNS_API_KEY,
+                            f"--{provider}-propagation-seconds",
+                            str(propagation_seconds),
+                        ]
+                    )
+                case "dns-azure":
+                    azure_creds = dns_config.get("azure_config")
+                    shutil.copy(f"/share/{azure_creds}", "/data/azure_creds")
+                    os.chmod("/data/azure_creds", 0o600)
+                    acme_args.extend(
+                        [
+                            "--authenticator",
+                            "dns-azure",
+                            "--dns-azure-config",
+                            "/data/azure_creds",
+                            "--dns-azure-propagation-seconds",
+                            str(propagation_seconds),
+                        ]
+                    )
+                case "dns-he":
+                    usr = dns_config.get("he_user")
+                    pwd = dns_config.get("he_pass")
+                    with open(DNS_API_KEY, "w") as f:
+                        f.write(
+                            f"dns_hurricane_electric_pass = {pwd}\n\ndns_hurricane_electric_user = {usr}\n"
+                        )
+                    acme_args.extend(
+                        [
+                            "--authenticator",
+                            "dns-hurricane_electric",
+                            "--dns-hurricane_electric-credentials",
+                            "/data/dnsapikey",
+                            "--dns-hurricane_electric-propagation-seconds",
+                            str(propagation_seconds),
+                        ]
                     )
         else:
-            acme_args.append("--standalone")
+            lego_provider = LEGO_PROVIDERS.get(provider)
+            if not lego_provider and provider == "dns-lego":
+                lego_provider = dns_config.get("lego_provider")
+
+            multi_creds = [f"dns_multi_provider = {lego_provider}"]
+            provider_env_prefix = ""
+
+            match provider:
+                case "dns-lego":
+                    multi_creds.extend(dns_config.get("lego_env", []))
+                case "dns-bunny":
+                    multi_creds.append(
+                        f"BUNNY_API_KEY={dns_config.get('bunny_api_key')}"
+                    )
+                case "dns-cloudflare":
+                    if dns_config.get("cloudflare_api_token"):
+                        multi_creds.append(
+                            f"CLOUDFLARE_DNS_API_TOKEN={dns_config['cloudflare_api_token']}"
+                        )
+                    else:
+                        multi_creds.append(
+                            f"CF_API_EMAIL={dns_config.get('cloudflare_email', '')}"
+                        )
+                        multi_creds.append(
+                            f"CF_API_KEY={dns_config.get('cloudflare_api_key', '')}"
+                        )
+                case "dns-cloudns":
+                    multi_creds.append(
+                        f"CLOUDNS_AUTH_PASSWORD={dns_config.get('cloudns_auth_password')}"
+                    )
+                    if dns_config.get("cloudns_auth_id"):
+                        multi_creds.append(
+                            f"CLOUDNS_AUTH_ID={dns_config['cloudns_auth_id']}"
+                        )
+                case "dns-desec":
+                    multi_creds.append(f"DESEC_TOKEN={dns_config.get('desec_token')}")
+                case "dns-digitalocean":
+                    multi_creds.append(
+                        f"DO_AUTH_TOKEN={dns_config.get('digitalocean_token')}"
+                    )
+                    provider_env_prefix = "DO"
+                case "dns-route53":
+                    multi_creds.append(
+                        f"AWS_ACCESS_KEY_ID={dns_config.get('aws_access_key_id')}"
+                    )
+                    multi_creds.append(
+                        f"AWS_SECRET_ACCESS_KEY={dns_config.get('aws_secret_access_key')}"
+                    )
+                    multi_creds.append(
+                        f"AWS_REGION={dns_config.get('aws_region', 'us-east-1')}"
+                    )
+                    provider_env_prefix = "AWS"
+                # Add remaining cases as needed, abbreviated here for brevity
+                case _:
+                    # Most simple token-based providers follow a pattern
+                    pass
+
+            if not provider_env_prefix:
+                provider_env_prefix = (lego_provider or "").replace("-", "_").upper()
+            multi_creds.append(
+                f"{provider_env_prefix}_PROPAGATION_TIMEOUT={propagation_seconds}"
+            )
+
+            with open(DNS_MULTI_CREDS, "w") as f:
+                f.write("\n".join(multi_creds) + "\n")
+            acme_args.extend(
+                [
+                    "--authenticator",
+                    "dns-multi",
+                    "--dns-multi-credentials",
+                    DNS_MULTI_CREDS,
+                    "--dns-multi-propagation-seconds",
+                    str(propagation_seconds),
+                ]
+            )
+            if dns_config.get("dns_multi_nameservers"):
+                acme_args.extend(
+                    ["--dns-multi-nameservers", dns_config["dns_multi_nameservers"]]
+                )
 
         if self.acme_server:
             acme_args.extend(["--server", self.acme_server])
