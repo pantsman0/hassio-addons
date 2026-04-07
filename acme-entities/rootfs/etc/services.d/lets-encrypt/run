@@ -129,7 +129,7 @@ class AcmeManager:
 
             if days <= 0:
                 return "Expired", self.cert_data[cert_name]
-            if days < 7:
+            elif days < 7:
                 return "Risky", self.cert_data[cert_name]
             return "OK", self.cert_data[cert_name]
         except Exception as e:
