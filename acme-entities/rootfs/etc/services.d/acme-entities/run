@@ -16,7 +16,7 @@ from cryptography.hazmat.backends import default_backend
 logging.basicConfig(
     level=logging.INFO, stream=sys.stdout, format="[%(levelname)s] %(message)s"
 )
-logger = logging.getLogger("letsencrypt")
+logger = logging.getLogger("acme-entities")
 
 OPTIONS_FILE = "/data/options.json"
 CERT_DIR = "/data/letsencrypt"
