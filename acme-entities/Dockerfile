@@ -49,3 +49,4 @@ RUN \
 
 # Copy data
 COPY rootfs /
+RUN chmod +x /etc/services.d/acme-entities/run
