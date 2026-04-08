@@ -1,9 +1,6 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Allow pip to install packages system-wide on Debian
-ENV PIP_BREAK_SYSTEM_PACKAGES=1
-
 # setup base
 # certbot-dns-multi replaces most individual DNS plugins using lego
 # Only legacy plugins are kept for providers not supported by lego: gehirn, eurodns, noris
@@ -18,28 +15,17 @@ ARG \
 
 RUN \
     set -x \
-    && apk add --no-cache \
-    ca-certificates \
-    openssl \
-    libffi \
-    && apk add --no-cache --virtual .build-deps \
-    build-base \
-    cargo \
-    go \
-    libffi-dev \
-    openssl-dev \
-    python3-dev \
-    libxml2-dev \
-    libxslt-dev \
-    rust \
-    certbot\
-    && pip3 install --no-cache-dir --no-binary :all: \
+    && apt update \
+    && apt install -y \
+    python3.12 \
+    virtualenv \
+    && virtualenv -p python3.12 /venv \
+    && /venv/bin/python -m pip install \
+    certbot=${CERTBOT_VERSION}\
     certbot-dns-azure==${CERTBOT_DNS_AZURE_VERSION} \
     certbot-dns-multi==${CERTBOT_DNS_MULTI_VERSION} \
     cryptography==${CRYPTOGRAPHY_VERSION} \
-    aiohttp \
-    && apk del .build-deps \
-    && rm -rf /root/.cache
+    aiohttp==${AIOHTTP_VERSION}
 
 # Copy data
 COPY rootfs /

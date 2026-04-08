@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv python3
+#!/venv/bin/python
 import asyncio
 import json
 import logging
