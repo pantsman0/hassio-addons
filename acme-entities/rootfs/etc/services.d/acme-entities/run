@@ -70,9 +70,6 @@ LEGO_PROVIDERS = {
     "dns-websupport": "websupport",
 }
 
-LEGACY_PROVIDERS = {"dns-eurodns", "dns-gehirn", "dns-noris"}
-DEPRECATED_PROVIDERS = {"dns-azure", "dns-he"}
-
 
 class AcmeManager:
     def __init__(self, options):
@@ -190,80 +187,20 @@ class AcmeManager:
 
         propagation_seconds = int(dns_config.get("propagation_seconds", 60))
 
-        if provider in LEGACY_PROVIDERS or provider in DEPRECATED_PROVIDERS:
-            match provider:
-                case "dns-eurodns":
-                    app_id = dns_config.get("eurodns_applicationId")
-                    api_key = dns_config.get("eurodns_apiKey")
-                    with open(DNS_API_KEY, "w") as f:
-                        f.write(
-                            f"dns_eurodns_apiKey = {api_key}\ndns_eurodns_applicationId = {app_id}\n"
-                        )
-                    acme_args.extend(
-                        [
-                            "--authenticator",
-                            provider,
-                            f"--{provider}-credentials",
-                            DNS_API_KEY,
-                            f"--{provider}-propagation-seconds",
-                            str(propagation_seconds),
-                        ]
-                    )
-                case "dns-gehirn":
-                    tok = dns_config.get("gehirn_api_token")
-                    sec = dns_config.get("gehirn_api_secret")
-                    with open(DNS_API_KEY, "w") as f:
-                        f.write(
-                            f"dns_gehirn_api_secret = {sec}\ndns_gehirn_api_token = {tok}\n"
-                        )
-                    acme_args.extend(
-                        [f"--{provider}", f"--{provider}-credentials", DNS_API_KEY]
-                    )
-                case "dns-noris":
-                    tok = dns_config.get("noris_token")
-                    with open(DNS_API_KEY, "w") as f:
-                        f.write(f"dns_noris_token = {tok}\n")
-                    acme_args.extend(
-                        [
-                            "--authenticator",
-                            provider,
-                            f"--{provider}-credentials",
-                            DNS_API_KEY,
-                            f"--{provider}-propagation-seconds",
-                            str(propagation_seconds),
-                        ]
-                    )
-                case "dns-azure":
-                    azure_creds = dns_config.get("azure_config")
-                    shutil.copy(f"/share/{azure_creds}", "/data/azure_creds")
-                    os.chmod("/data/azure_creds", 0o600)
-                    acme_args.extend(
-                        [
-                            "--authenticator",
-                            "dns-azure",
-                            "--dns-azure-config",
-                            "/data/azure_creds",
-                            "--dns-azure-propagation-seconds",
-                            str(propagation_seconds),
-                        ]
-                    )
-                case "dns-he":
-                    usr = dns_config.get("he_user")
-                    pwd = dns_config.get("he_pass")
-                    with open(DNS_API_KEY, "w") as f:
-                        f.write(
-                            f"dns_hurricane_electric_pass = {pwd}\n\ndns_hurricane_electric_user = {usr}\n"
-                        )
-                    acme_args.extend(
-                        [
-                            "--authenticator",
-                            "dns-hurricane_electric",
-                            "--dns-hurricane_electric-credentials",
-                            "/data/dnsapikey",
-                            "--dns-hurricane_electric-propagation-seconds",
-                            str(propagation_seconds),
-                        ]
-                    )
+        if provider == "dns-azure":
+            azure_creds = dns_config.get("azure_config")
+            shutil.copy(f"/share/{azure_creds}", "/data/azure_creds")
+            os.chmod("/data/azure_creds", 0o600)
+            acme_args.extend(
+                [
+                    "--authenticator",
+                    "dns-azure",
+                    "--dns-azure-config",
+                    "/data/azure_creds",
+                    "--dns-azure-propagation-seconds",
+                    str(propagation_seconds),
+                ]
+            )
         else:
             lego_provider = LEGO_PROVIDERS.get(provider)
             if not lego_provider and provider == "dns-lego":

@@ -1,5 +1,5 @@
 ---
-version: 0.3.6
+version: 0.3.7
 breaking_versions: []
 slug: acme-entities
 name: Acme Entities
@@ -39,7 +39,6 @@ schema:
               dns-duckdns|\
               dns-dynu|\
               dns-easydns|\
-              dns-eurodns|\
               dns-gandi|\
               dns-gehirn|\
               dns-godaddy|\
@@ -99,19 +98,12 @@ schema:
         easydns_endpoint: str?
         easydns_key: str?
         easydns_token: str?
-        eurodns_apiKey: str?
-        eurodns_applicationId: str?
         gandi_api_key: str?
         gandi_sharing_id: str?
         gandi_token: str?
-        gehirn_api_secret: str?
-        gehirn_api_token: str?
         godaddy_key: str?
         godaddy_secret: str?
         google_creds: str?
-        he_pass: str?
-        he_user: str?
-        hetzner_api_token: str?
         infomaniak_api_token: str?
         inwx_password: str?
         inwx_shared_secret: str?

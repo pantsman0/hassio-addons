@@ -12,10 +12,7 @@ ARG \
     BUILD_ARCH \
     ACME_VERSION \
     CERTBOT_DNS_AZURE_VERSION \
-    CERTBOT_DNS_EURODNS_VERSION \
-    CERTBOT_DNS_HURRICANE_ELECTRIC_VERSION \
     CERTBOT_DNS_MULTI_VERSION \
-    CERTBOT_DNS_NORISNETWORK_VERSION \
     CERTBOT_VERSION \
     CRYPTOGRAPHY_VERSION
 
@@ -32,16 +29,13 @@ RUN \
     libffi-dev \
     openssl-dev \
     python3-dev \
+    libxml2-dev \
+    libxslt-dev \
     rust \
+    certbot\
     && pip3 install --no-cache-dir --no-binary :all: \
-    acme==${ACME_VERSION} \
-    certbot==${CERTBOT_VERSION} \
     certbot-dns-azure==${CERTBOT_DNS_AZURE_VERSION} \
-    certbot-dns-eurodns==${CERTBOT_DNS_EURODNS_VERSION} \
-    certbot-dns-gehirn==${CERTBOT_VERSION} \
-    certbot-dns-hurricane-electric==${CERTBOT_DNS_HURRICANE_ELECTRIC_VERSION} \
     certbot-dns-multi==${CERTBOT_DNS_MULTI_VERSION} \
-    certbot-dns-norisnetwork==${CERTBOT_DNS_NORISNETWORK_VERSION} \
     cryptography==${CRYPTOGRAPHY_VERSION} \
     aiohttp \
     && apk del .build-deps \
