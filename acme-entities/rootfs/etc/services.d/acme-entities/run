@@ -180,7 +180,6 @@ class AcmeManager:
         if not auth:
             raise ValueError(f"Authenticator {auth_ref} not found")
 
-        challenge = auth.get("challenge")
         dns_config = auth.get("dns", {})
 
         provider = auth.get("provider")
@@ -385,6 +384,8 @@ class AcmeManager:
             "--email",
             self.email,
             "--agree-tos",
+            "--preferred-challenges",
+            "dns",
         ]
         cmd.extend(key_args)
         cmd.extend(add_args)
@@ -397,8 +398,6 @@ class AcmeManager:
                 CERT_DIR,
                 "--work-dir",
                 WORK_DIR,
-                "--preferred-challenges",
-                challenge,
             ]
         )
         cmd.extend(acme_args)
