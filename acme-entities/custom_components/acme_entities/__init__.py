@@ -3,6 +3,7 @@ import logging
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers import discovery
 
 from .const import DOMAIN, EVENT_RENEW, SERVICE_RENEW
 
@@ -14,10 +15,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data.setdefault(DOMAIN, {})
 
     hass.async_create_task(
-        hass.helpers.discovery.async_load_platform("sensor", DOMAIN, {}, config)
+        discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
     )
     hass.async_create_task(
-        hass.helpers.discovery.async_load_platform("button", DOMAIN, {}, config)
+        discovery.async_load_platform(hass, "button", DOMAIN, {}, config)
     )
 
     async def handle_renew(call):

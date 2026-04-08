@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import traceback
 from datetime import datetime, timedelta, timezone
 
 import aiohttp
@@ -448,7 +449,12 @@ class AcmeManager:
                         stderr.decode(),
                     )
             except Exception as e:
-                logger.error("Error during renewal of %s: %s", cert_name, e)
+                logger.error(
+                    "Error during renewal of %s: %s... Backtrace: %s",
+                    cert_name,
+                    e,
+                    traceback.format_exc(),
+                )
             finally:
                 self.processing_certs.remove(cert_name)
                 await self.update_ha_states(session)
