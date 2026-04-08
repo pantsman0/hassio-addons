@@ -33,7 +33,7 @@ RUN \
     openssl-dev \
     python3-dev \
     rust \
-    && pip3 install --no-cache-dir \
+    && pip3 install --no-cache-dir --no-binary :all: \
     acme==${ACME_VERSION} \
     certbot==${CERTBOT_VERSION} \
     certbot-dns-azure==${CERTBOT_DNS_AZURE_VERSION} \
