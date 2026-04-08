@@ -424,6 +424,7 @@ class AcmeManager:
 
             try:
                 cmd = self.prepare_certbot_args(cert)
+                logger.debug("Running certbot with args: %s", cmd)
                 proc = await asyncio.create_subprocess_exec(
                     "certbot",
                     *cmd,
