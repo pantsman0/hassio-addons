@@ -13,14 +13,10 @@ ARG \
     CERTBOT_VERSION \
     CRYPTOGRAPHY_VERSION
 
-RUN \
-    set -x \
-    && apt update \
-    && apt install -y \
-    python3.12 \
-    virtualenv \
-    && virtualenv -p python3.12 /venv \
-    && /venv/bin/python -m pip install \
+RUN apt update
+RUN apt install -y python3.12 virtualenv
+RUN virtualenv -p python3.12 /venv
+RUN /venv/bin/python -m pip install \
     certbot==${CERTBOT_VERSION}\
     certbot-dns-azure==${CERTBOT_DNS_AZURE_VERSION} \
     certbot-dns-multi==${CERTBOT_DNS_MULTI_VERSION} \
