@@ -21,7 +21,7 @@ RUN \
     virtualenv \
     && virtualenv -p python3.12 /venv \
     && /venv/bin/python -m pip install \
-    certbot=${CERTBOT_VERSION}\
+    certbot==${CERTBOT_VERSION}\
     certbot-dns-azure==${CERTBOT_DNS_AZURE_VERSION} \
     certbot-dns-multi==${CERTBOT_DNS_MULTI_VERSION} \
     cryptography==${CRYPTOGRAPHY_VERSION} \
