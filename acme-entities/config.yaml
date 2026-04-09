@@ -1,5 +1,5 @@
 ---
-version: 0.3.13
+version: 0.3.14
 breaking_versions: []
 slug: acme-entities
 name: Acme Entities
@@ -162,8 +162,8 @@ schema:
       domains:
         - str
       authenticator: str
-      keyfile: str
       certfile: str
+      keyfile: str
       key_type: list(ecdsa|rsa)?
       elliptic_curve: list(secp256r1|secp384r1)?
   acme_server: url?
