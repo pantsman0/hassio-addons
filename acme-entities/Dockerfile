@@ -27,3 +27,4 @@ RUN /venv/bin/python -m pip install \
 # Copy data
 COPY rootfs /
 RUN chmod +x /etc/services.d/acme-entities/run
+RUN chmod +x /etc/services.d/acme-entities/finish

@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import sys
 import traceback
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import aiohttp
 from cryptography import x509
@@ -92,17 +92,14 @@ class AcmeManager:
         self.renewal_lock = asyncio.Lock()
         self.processing_certs = set()
 
-    def get_cert_path(self, filename):
-        return f"/ssl/{filename}"
-
     def get_full_state(self, cert_name):
         cert_config = next(
-            (c for c in self.certificates if c["domains"][0] == cert_name), None
+            filter(lambda cert: cert_name in cert["domains"], self.certificates), None
         )
         if not cert_config:
             return "Unknown", {}
 
-        target_file = self.get_cert_path(cert_config["certfile"])
+        target_file = f"/ssl/{cert_config["certfile"]}"
 
         if cert_name in self.processing_certs:
             return "Processing", self.cert_data.get(cert_name, {})
@@ -169,7 +166,9 @@ class AcmeManager:
                 logger.error("Error communicating with HA REST API: %s", e)
 
     def prepare_certbot_args(self, cert):
-        domains = cert.get("domains") or []
+        domains = cert.get("domains")
+        if not domains:
+            raise ValueError(f"Certificate {cert.get('name')} has no domains")
         cert_name = domains[0]
         auth_ref = cert.get("authenticator")
 
@@ -177,9 +176,8 @@ class AcmeManager:
         if not auth:
             raise ValueError(f"Authenticator {auth_ref} not found")
 
-        dns_config = auth.get("dns", {})
-
         provider = auth.get("provider")
+        dns_config = auth.get("dns", {})
 
         acme_args = []
         key_args = []
@@ -187,6 +185,7 @@ class AcmeManager:
 
         propagation_seconds = int(dns_config.get("propagation_seconds", 60))
 
+        # Handle Azure DNS provider as the only non-lego provider
         if provider == "dns-azure":
             azure_creds = dns_config.get("azure_config")
             shutil.copy(f"/share/{azure_creds}", "/data/azure_creds")
@@ -265,7 +264,7 @@ class AcmeManager:
                 f"{provider_env_prefix}_PROPAGATION_TIMEOUT={propagation_seconds}"
             )
 
-            with open(DNS_MULTI_CREDS, "w") as f:
+            with open(DNS_MULTI_CREDS, "w", encoding="utf-8") as f:
                 f.write("\n".join(multi_creds) + "\n")
             acme_args.extend(
                 [
@@ -285,9 +284,13 @@ class AcmeManager:
         if self.acme_server:
             acme_args.extend(["--server", self.acme_server])
             if self.acme_root_ca_cert:
+                # We're setting check to false here since we're not doing anything with the return code.
+                # If update-ca-certificates fails, we'll just continue. We will know if something is wrong
+                # when we try to renew the certificate and the TLS connection fails.
                 subprocess.run(
-                    f"echo '{self.acme_root_ca_cert}' | openssl x509 > /usr/local/share/ca-certificates/acme_root_ca.crt && update-ca-certificates --fresh",
+                    f"echo '{self.acme_root_ca_cert}' > /usr/local/share/ca-certificates/acme_root_ca.crt && update-ca-certificates --fresh",
                     shell=True,
+                    check=False,
                 )
         else:
             acme_args.extend(["--preferred-chain", "ISRG Root X1"])
@@ -367,7 +370,7 @@ class AcmeManager:
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
-                stdout, stderr = await proc.communicate()
+                _stdout, stderr = await proc.communicate()
 
                 if proc.returncode == 0:
                     logger.info("Successfully renewed certificate %s", cert_name)
@@ -431,21 +434,38 @@ async def ws_listener(manager, session):
                     "Connected to Home Assistant WebSocket and listening for acme_entities.renew events"
                 )
 
+                # Send initial states
+                await manager.update_ha_states(session)
+
+                # Now that we're connected and synchronised, we can just loop on the ws connection
                 async for msg in ws:
-                    if msg.type == aiohttp.WSMsgType.TEXT:
-                        data = json.loads(msg.data)
-                        if data.get("type") == "event":
-                            event_data = data["event"]["data"]
-                            cert_name = event_data.get("name")
-                            if cert_name:
-                                asyncio.create_task(
-                                    manager.run_renewal(cert_name, session)
-                                )
-                    elif msg.type in (
-                        aiohttp.WSMsgType.CLOSED,
-                        aiohttp.WSMsgType.ERROR,
-                    ):
-                        break
+                    match msg.type:
+                        case aiohttp.WSMsgType.TEXT:
+                            data = json.loads(msg.data)
+                            if data.get("type") == "event":
+                                event_data = data["event"]["data"]
+                                cert_name = event_data.get("name")
+                                if cert_name is not None and cert_name != "":
+                                    asyncio.create_task(
+                                        manager.run_renewal(cert_name, session)
+                                    )
+                        case aiohttp.WSMsgType.ERROR:
+                            logger.error(
+                                "WebSocket connection error - crashing as we should be restarted by the supervisor."
+                            )
+                            logger.error("WebSocket error data: %s", msg.data)
+                            break
+                        case aiohttp.WSMsgType.CLOSED:
+                            logger.error(
+                                "WebSocket connection closed - crashing as we should be restarted by the supervisor."
+                            )
+                            logger.error("WebSocket closed data: %s", msg.data)
+                            break
+                        case _:
+                            logger.warning(
+                                "Unhandled WebSocket message type: %s", msg.type
+                            )
+        # TODO: Can I easily get a list of possible exceptions to handle and not match on the base Exception type?
         except Exception as e:
             logger.error("WebSocket connection error: %s", e)
             await asyncio.sleep(30)
@@ -456,8 +476,7 @@ async def main():
         logger.error("Options file not found")
         sys.exit(1)
 
-    with open(OPTIONS_FILE, "r") as f:
-        options = json.load(f)
+    options = json.load(open(OPTIONS_FILE, "r", encoding="utf-8"))
 
     manager = AcmeManager(options)
     os.makedirs(CERT_DIR, exist_ok=True)
@@ -470,7 +489,8 @@ async def main():
         # Start WS listener
         asyncio.create_task(ws_listener(manager, session))
 
-        # Maintenance loop (Every 15 minutes)
+        # Maintenance loop (Every 15 minutes), checking the expiry of certificates
+        # and whether the base files have been changed/removed.
         while True:
             await manager.update_ha_states(session)
             await asyncio.sleep(15 * 60)

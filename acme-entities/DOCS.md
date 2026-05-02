@@ -211,4 +211,10 @@ http:
 
 ### Create & renew certificates
 
-TODO
+To create a new certificated, use the "Add" button on the configuration page.
+Add the name of the certificate, the domains, the authenticator, and the paths to the certificate and key files.
+The certificate should show up as 2 new entities in the "Entities" page. One sensor and one button - the button is used to manually renew the certificate.
+
+
+### Removing certificates
+To remove a certificate, use the "Remove" button on the configuration page. The entities and certificate files can then be manually cleaned.

@@ -1,5 +1,5 @@
 ---
-version: 0.3.14
+version: 1.1.0
 breaking_versions: []
 slug: acme-entities
 name: Acme Entities
@@ -67,7 +67,7 @@ schema:
               dns-sakuracloud|\
               dns-simply|\
               dns-transip|\
-              dns-websupport)?"
+              dns-websupport)"
       dns:
         aws_access_key_id: str?
         aws_region: str?
